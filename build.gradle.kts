@@ -4,7 +4,7 @@ plugins {
 }
 
 version = "1.0.0"
-group = "com.kevencarneiro.hadoop"
+group = "com.kevencarneiro"
 
 repositories {
     mavenCentral()
@@ -32,8 +32,8 @@ publishing {
     publications {
         register<MavenPublication>("gpr") {
             from(components["java"])
-            groupId = "com.kevencarneiro.hadoop"
-            artifactId = "HadoopUnzip"
+            groupId = "com.kevencarneiro"
+            artifactId = "hadoopunzip"
         }
     }
 }

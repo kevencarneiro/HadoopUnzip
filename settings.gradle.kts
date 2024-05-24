@@ -1,2 +1,2 @@
-rootProject.name = "HadoopUnzip"
+rootProject.name = "hadoopunzip"
 
