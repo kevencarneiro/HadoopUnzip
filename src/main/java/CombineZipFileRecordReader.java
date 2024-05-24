@@ -1,8 +1,4 @@
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -10,16 +6,16 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 
 import java.io.IOException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
 
 public class CombineZipFileRecordReader extends RecordReader<NullWritable, Text> {
     private CombineFileSplit split;
     private int currentFileIndex;
     private Text currentKey = new Text();
     private boolean isDone = false;
+
+    CombineZipFileRecordReader(CombineFileSplit split, TaskAttemptContext context) throws IOException {
+        this.initialize(split, context);
+    }
 
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException {
