@@ -7,17 +7,14 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
-import java.io.IOException;
-
 public class ZipFileInputFormat extends FileInputFormat<NullWritable, Text> {
     @Override
     protected boolean isSplitable(JobContext context, Path filename) {
-        return false;
+        return false;  // Ensure the zip file is not split
     }
 
     @Override
-    public RecordReader<NullWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context)
-            throws IOException, InterruptedException {
+    public RecordReader<NullWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
         return new ZipFileRecordReader();
     }
 }

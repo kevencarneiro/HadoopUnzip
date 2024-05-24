@@ -7,7 +7,6 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 import java.util.zip.ZipEntry;
@@ -22,9 +21,8 @@ public class ZipFileRecordReader extends RecordReader<NullWritable, Text> {
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException {
         FileSplit fileSplit = (FileSplit) split;
-        Configuration conf = context.getConfiguration();
         Path filePath = fileSplit.getPath();
-        FileSystem fs = filePath.getFileSystem(conf);
+        FileSystem fs = filePath.getFileSystem(context.getConfiguration());
         fileIn = fs.open(filePath);
         zipIn = new ZipInputStream(fileIn);
     }
@@ -36,13 +34,7 @@ public class ZipFileRecordReader extends RecordReader<NullWritable, Text> {
             isFinished = true;
             return false;
         }
-        byte[] buffer = new byte[1024];
-        StringBuilder sb = new StringBuilder();
-        int len;
-        while ((len = zipIn.read(buffer)) > 0) {
-            sb.append(new String(buffer, 0, len));
-        }
-        currentValue.set(sb.toString());
+        currentValue.set(entry.getName());
         return true;
     }
 
