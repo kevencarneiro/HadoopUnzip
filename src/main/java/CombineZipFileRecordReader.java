@@ -3,6 +3,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -14,61 +15,30 @@ import java.util.zip.ZipInputStream;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 
-public class CombineZipFileRecordReader extends RecordReader<NullWritable, BytesWritable> {
+public class CombineZipFileRecordReader extends RecordReader<NullWritable, Text> {
     private CombineFileSplit split;
-    private TaskAttemptContext context;
-    private int currentFileIndex = 0;
-    private ZipInputStream zipIn;
-    private BytesWritable currentValue = new BytesWritable();
-    private ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    private static final int BUFFER_SIZE = 1024 * 1024; // 1 MB buffer
-
-    public CombineZipFileRecordReader(CombineFileSplit split, TaskAttemptContext context) throws IOException {
-        this.split = split;
-        this.context = context;
-        initialize(split, context);
-    }
+    private int currentFileIndex;
+    private Text currentKey = new Text();
+    private boolean isDone = false;
 
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException {
-        openNextZipInputStream();
-    }
-
-    private void openNextZipInputStream() throws IOException {
-        if (currentFileIndex < split.getNumPaths()) {
-            Configuration conf = context.getConfiguration();
-            Path filePath = split.getPath(currentFileIndex);
-            FileSystem fs = filePath.getFileSystem(conf);
-            InputStream is = fs.open(filePath);
-            zipIn = new ZipInputStream(is);
-        }
+        this.split = (CombineFileSplit) split;
+        this.currentFileIndex = -1;
     }
 
     @Override
     public boolean nextKeyValue() throws IOException {
-        if (zipIn == null) {
+        if (isDone) {
             return false;
         }
-
-        ZipEntry entry = zipIn.getNextEntry();
-        if (entry == null) {
-            zipIn.close();
-            currentFileIndex++;
-            if (currentFileIndex >= split.getNumPaths()) {
-                return false;
-            }
-            openNextZipInputStream();
-            return nextKeyValue();
+        currentFileIndex++;
+        if (currentFileIndex < split.getNumPaths()) {
+            currentKey.set(split.getPath(currentFileIndex).toString());
+            return true;
         }
-
-        baos.reset();
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int len;
-        while ((len = zipIn.read(buffer)) > 0) {
-            baos.write(buffer, 0, len);
-        }
-        currentValue.set(baos.toByteArray(), 0, baos.size());
-        return true;
+        isDone = true;
+        return false;
     }
 
     @Override
@@ -77,19 +47,18 @@ public class CombineZipFileRecordReader extends RecordReader<NullWritable, Bytes
     }
 
     @Override
-    public BytesWritable getCurrentValue() {
-        return currentValue;
+    public Text getCurrentValue() {
+        return currentKey;
     }
 
     @Override
     public float getProgress() throws IOException {
-        return (float) currentFileIndex / split.getNumPaths();
+        return isDone ? 1.0f : Math.min(1.0f, currentFileIndex / (float) split.getNumPaths());
     }
 
     @Override
-    public void close() throws IOException {
-        if (zipIn != null) {
-            zipIn.close();
-        }
+    public void close() {
+        // Nothing to close since we're not opening files here
     }
 }
+
