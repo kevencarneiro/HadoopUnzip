@@ -31,12 +31,7 @@ public class UnzipDriver {
         FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 
         // Set the maximum split size (optional)
-        CombineFileInputFormat.setMaxInputSplitSize(job, 256 * 1024 * 1024); // 256 MB
-
-        while (!job.isComplete()) {
-            System.out.println("Map Progress: " + job.mapProgress() + "%" + "\tReduce Progress: " + job.reduceProgress() + "%\t" + " Job Progress: " + job.getJobID() + "%");
-            Thread.sleep(5000);
-        }
+//        CombineFileInputFormat.setMaxInputSplitSize(job, 256 * 1024 * 1024); // 256 MB
 
         // Submit the job
         boolean jobCompletedSuccessfully = job.waitForCompletion(true);
