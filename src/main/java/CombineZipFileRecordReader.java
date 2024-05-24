@@ -20,6 +20,8 @@ public class CombineZipFileRecordReader extends RecordReader<NullWritable, Bytes
     private int currentFileIndex = 0;
     private ZipInputStream zipIn;
     private BytesWritable currentValue = new BytesWritable();
+    private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    private static final int BUFFER_SIZE = 1024 * 1024; // 1 MB buffer
 
     public CombineZipFileRecordReader(CombineFileSplit split, TaskAttemptContext context) throws IOException {
         this.split = split;
@@ -29,28 +31,38 @@ public class CombineZipFileRecordReader extends RecordReader<NullWritable, Bytes
 
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException {
-        Configuration conf = context.getConfiguration();
-        Path filePath = ((CombineFileSplit) split).getPath(currentFileIndex);
-        FileSystem fs = filePath.getFileSystem(conf);
-        InputStream is = fs.open(filePath);
-        zipIn = new ZipInputStream(is);
+        openNextZipInputStream();
+    }
+
+    private void openNextZipInputStream() throws IOException {
+        if (currentFileIndex < split.getNumPaths()) {
+            Configuration conf = context.getConfiguration();
+            Path filePath = split.getPath(currentFileIndex);
+            FileSystem fs = filePath.getFileSystem(conf);
+            InputStream is = fs.open(filePath);
+            zipIn = new ZipInputStream(is);
+        }
     }
 
     @Override
     public boolean nextKeyValue() throws IOException {
-        ZipEntry entry;
-        while ((entry = zipIn.getNextEntry()) == null) {
+        if (zipIn == null) {
+            return false;
+        }
+
+        ZipEntry entry = zipIn.getNextEntry();
+        if (entry == null) {
+            zipIn.close();
             currentFileIndex++;
             if (currentFileIndex >= split.getNumPaths()) {
                 return false;
             }
-            Path filePath = split.getPath(currentFileIndex);
-            FileSystem fs = filePath.getFileSystem(context.getConfiguration());
-            InputStream is = fs.open(filePath);
-            zipIn = new ZipInputStream(is);
+            openNextZipInputStream();
+            return nextKeyValue();
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024 * 1024]; // 1 MB buffer
+
+        baos.reset();
+        byte[] buffer = new byte[BUFFER_SIZE];
         int len;
         while ((len = zipIn.read(buffer)) > 0) {
             baos.write(buffer, 0, len);
