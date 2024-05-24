@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.kevencarneiro.hadoop"
-version = "1.0"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -22,7 +22,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/OWNER/REPOSITORY")
+            url = uri("https://maven.pkg.github.com/kevencarneiro/hadoopunzip")
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
                 password = project.findProperty("gpr.key") as String? ?: System.getenv("TOKEN")
