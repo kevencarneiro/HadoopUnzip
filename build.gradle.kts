@@ -3,7 +3,6 @@ plugins {
     id("maven-publish")
 }
 
-group = "com.kevencarneiro.hadoop"
 version = "1.0.0"
 
 repositories {
@@ -42,6 +41,6 @@ tasks.test {
 
 tasks.jar {
     manifest {
-        attributes["Main-Class"] = "com.kevencarneiro.hadoop.UnzipDriver"
+        attributes["Main-Class"] = "UnzipDriver"
     }
 }
