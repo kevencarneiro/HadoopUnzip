@@ -41,7 +41,7 @@ public class UnzipDriver {
         job.setOutputValueClass(NullWritable.class);
 
         // Set the input format class
-        job.setInputFormatClass(CombineFileInputFormat.class);
+        job.setInputFormatClass(CustomCombineFileInputFormat.class);
         CombineFileInputFormat.addInputPath(job, new Path(args[0]));
 
         // Set the output format class

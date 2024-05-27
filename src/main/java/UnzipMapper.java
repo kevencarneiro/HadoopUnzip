@@ -2,7 +2,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -15,7 +14,7 @@ import java.util.zip.ZipInputStream;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-public class UnzipMapper extends Mapper<NullWritable, NullWritable, NullWritable, BytesWritable> {
+public class UnzipMapper extends Mapper<NullWritable, NullWritable, NullWritable, NullWritable> {
     private boolean deleteOriginal;
     private static final Logger LOGGER = Logger.getLogger(UnzipMapper.class.getName());
 
