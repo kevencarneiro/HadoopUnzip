@@ -1,7 +1,6 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -28,13 +27,25 @@ public class UnzipDriver {
         LOGGER.info("mapreduce.reduce.java.opts: " + conf.get("mapreduce.reduce.java.opts"));
 
         Job job = Job.getInstance(conf, "Unzip Files");
+        // Set the Jar by finding where a given class came from
         job.setJarByClass(UnzipDriver.class);
+
+        // Set the mapper class
         job.setMapperClass(UnzipMapper.class);
-        job.setInputFormatClass(CombineZipFileInputFormat.class);
+
+        // No need for a reducer in this job
+        job.setNumReduceTasks(0);
+
+        // Set the output key and value classes
         job.setOutputKeyClass(NullWritable.class);
-        job.setOutputValueClass(BytesWritable.class);
-        CombineFileInputFormat.addInputPath(job, new Path(otherArgs[0]));
-        FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
+        job.setOutputValueClass(NullWritable.class);
+
+        // Set the input format class
+        job.setInputFormatClass(CombineFileInputFormat.class);
+        CombineFileInputFormat.addInputPath(job, new Path(args[0]));
+
+        // Set the output format class
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         // Set the maximum split size (optional)
         CombineFileInputFormat.setMaxInputSplitSize(job, 256 * 1024 * 1024); // 256 MB
