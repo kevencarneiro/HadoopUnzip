@@ -2,7 +2,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 public class UnzipDriver {
     private static final Logger LOGGER = Logger.getLogger(UnzipDriver.class.getName());
+
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
@@ -18,7 +19,6 @@ public class UnzipDriver {
             System.exit(2);
         }
 
-        // Check if the deleteOriginal argument is provided
         if (otherArgs.length == 3 && otherArgs[2].equals("deleteOriginal")) {
             conf.setBoolean("unzip.deleteOriginal", true);
         }
@@ -27,32 +27,17 @@ public class UnzipDriver {
         LOGGER.info("mapreduce.reduce.java.opts: " + conf.get("mapreduce.reduce.java.opts"));
 
         Job job = Job.getInstance(conf, "Unzip Files");
-        // Set the Jar by finding where a given class came from
         job.setJarByClass(UnzipDriver.class);
-
-        // Set the mapper class
         job.setMapperClass(UnzipMapper.class);
-
-        // No need for a reducer in this job
         job.setNumReduceTasks(0);
-
-        // Set the output key and value classes
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(NullWritable.class);
 
-        // Set the input format class
-        job.setInputFormatClass(CustomCombineFileInputFormat.class);
-        CombineFileInputFormat.addInputPath(job, new Path(args[0]));
+        job.setInputFormatClass(WholeFileInputFormat.class);
+        FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
+        FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 
-        // Set the output format class
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
-
-        // Set the maximum split size (optional)
-        CombineFileInputFormat.setMaxInputSplitSize(job, 256 * 1024 * 1024); // 256 MB
-
-        // Submit the job
         boolean jobCompletedSuccessfully = job.waitForCompletion(true);
-        // Ensure the job is complete
         if (jobCompletedSuccessfully) {
             System.out.println("Job completed successfully.");
         } else {
